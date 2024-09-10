@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+    <main class="container">
+
+        <h3  class="text-center">Черновая заявка</h3>
+
+        <span>Статус: Черновик</span>
+        <span>Дата создания: 12 сентября 2024г</span>
+        <span>Название космодрома: Ванденберг</span>
+
+        <h4 class="text-center">Космические корабли</h4>
+
+        <div class="cards-wrapper">
+
+            {% for ship in order.ships %}
+
+                {% include "ship_card.html" %}
+
+            {% endfor %}
+
+        </div>
+
+    </main>
+{% endblock content %}

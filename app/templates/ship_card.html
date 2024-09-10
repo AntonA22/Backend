@@ -1,0 +1,35 @@
+{% load static %}
+
+<div class="card">
+
+    <img src="{{ ship.image }}" class="ship-preview" alt=""/>
+
+    <div class="card-body" >
+
+        <div class="card-info">
+
+            <h5 class="card-title">{{ ship.name }}</h5>
+
+            <p class="card-text">{{ ship.description|truncatechars:100 }}</p>
+
+        </div>
+
+        {% if "http://localhost:8000/orders" in request.build_absolute_uri %}
+            <div class="form-group">
+                <label class="form-label">Очередь на подсоединение</label>
+                <input placeholder="Очередь на подсоединение" disabled="" type="number" class="form-control" value={{ ship.queue }}>
+            </div>
+        {% endif %}
+
+        <div class="card-btns">
+
+            <a href="/ships/{{ ship.id }}" class="btn btn-primary mt5">
+                Открыть
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
