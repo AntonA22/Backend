@@ -39,7 +39,7 @@ ships = [
 ]
 
 draft_order = {
-    "id": 123,
+    "id": 1,
     "ships": [
         {
             "id": 3,
@@ -93,7 +93,7 @@ def getOrderById(order_id):
     return draft_order
 
 
-def index(request):
+def index(request):   #  функция обработки страницы после поиска
     query = request.GET.get("query", "")
     ships = searchShips(query)
 
@@ -106,7 +106,7 @@ def index(request):
     return render(request, "home_page.html", context)
 
 
-def ship(request, ship_id):
+def ship(request, ship_id): 
     context = {
         "id": ship_id,
         "ship": getShipById(ship_id),
