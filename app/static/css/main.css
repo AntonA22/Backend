@@ -50,11 +50,13 @@
       gap: 25px;
       justify-content: space-between;
       margin-top: 15px;
+      border-radius: 0px;
   }
   
   .cards-wrapper .card {
       background: var(--card-bg);
-      border-radius: 16px;
+      border-radius: 0px;
+      border: 0px;
   }
   
   .cards-wrapper .card .card-body {
@@ -62,6 +64,7 @@
       flex-direction: column;
       justify-content: space-between;
       min-height: 225px;
+      border-radius: 0px;
   }
   
   .cards-wrapper .card .form-group {
@@ -70,9 +73,8 @@
   
   .cards-wrapper .card img {
       height: 250px;
-      width: 80%;
       margin: auto;
-      padding: 25px 0;
+      border-radius: 0px;
   }
   
   .ship-preview {
