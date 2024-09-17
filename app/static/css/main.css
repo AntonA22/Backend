@@ -1,32 +1,49 @@
-
 :root {
-    --bg: #A5A5A5;
-    --card-bg: #F9F9F9;
-    --color: #000;
-    --header-bg: #fff;
-    --primary-color: #26B625;
-  }
+    --bg: #000;
+    --card-bg: #414141;
+    --card-border-color: rgba(0, 0, 0, .125);
+    --color: #fff;
+    --header-bg: #2684E6;
+    --header-color: #fff;
+    --primary-btn-bg: #000;
+    --primary-btn-color: #fff;
+    --bin-bg: #414141;
+    --bin-color: var(--primary-btn-color);
+    --badge-color: #000;
+    --badge-bg: #fff;
+}
 
-  
-  .wrapper {
-      background: var(--bg);
-      min-height: 100vh;
-      color: var(--color);
-  }
-  
-  .navbar {
-      background-color: var(--header-bg);
-  }
+.wrapper {
+    background: var(--bg);
+    min-height: 100vh;
+    color: var(--color);
+}
 
-  .nav-link-style {
-    color: #fff !important;
-    text-transform: uppercase;
-    font-weight: 500;
-    font-style: normal;
-    font: 16px / 28px DIN Condensed, sans-serif;
-  }
+.navbar {
+    background-color: var(--header-bg);
+}
 
-  .custom-navar {
+.nav-link, .navbar-brand{
+    color: var(--header-color) !important;
+}
+
+.nav-link:hover, .navbar-brand:hover{
+    color: hsl(from var(--header-color) h s calc(l - 10)) !important;
+}
+
+.navbar .title {
+    display: flex !important;
+    align-items: center !important;
+}
+
+.cards-wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 25%));
+    gap: 25px;
+    justify-content: space-between;
+}
+
+.custom-navar {
     color: #fff !important;
     text-transform: uppercase;
     font-weight: 500;
@@ -34,91 +51,131 @@
     font: 14px / 28px DIN Condensed, sans-serif;
   }
 
-   .nav-link-style:hover {
-    color: rgb(154, 153, 153) !important;
-  }
-  
-  .navbar .title {
-      display: flex !important;
-      align-items: center !important;
-  }
-  
-  
-  .cards-wrapper {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 25%));
-      gap: 25px;
-      justify-content: space-between;
-      margin-top: 15px;
-      border-radius: 0px;
-  }
-  
-  .cards-wrapper .card {
-      background: var(--card-bg);
-      border-radius: 0px;
-      border: 0px;
-  }
-  
-  .cards-wrapper .card .card-body {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 225px;
-      border-radius: 0px;
-  }
-  
-  .cards-wrapper .card .form-group {
-      margin-top: 15px
-  }
-  
-  .cards-wrapper .card img {
-      height: 250px;
-      margin: auto;
-      border-radius: 0px;
-  }
-  
-  .ship-preview {
-      width: 100%;
-      height: 150px;
-      background-size: cover;
-  }
-  
-  .ship-image {
-      width: 100%;
-  }
-  
-  main {
-      display: flex;
-      flex-direction: column;
-      gap: 25px;
-      padding: 25px 0;
-  }
-  
-  .bin {
-      position: relative !important;
-  }
-  
-  .badge {
-      position: absolute !important;
-      top: -10px !important;
-      right: -15px;
-      background-color: var(--primary-color) !important;
-  }
-  
-  .justify-end {
-      display: flex;
-      justify-content: flex-end;
-  }
-  
-  .card .form-group {
-      margin-bottom: 25px;
-  }
-  
-  .ship-page img {
-      width: 80%;
-  }
-  
-  .btn-primary {
-      background-color: var(--primary-color) !important;
-      border-color: var(--primary-color) !important;
-  }
+.cards-wrapper .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border-color);
+    border-radius: 0px;
+}
+
+.cards-wrapper .card .card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.cards-wrapper .card .card-body .card-info {
+    margin-bottom: 25px;
+}
+
+.horizontal-form-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 100px; /* Расстояние между элементами */
+}
+
+.last-item {
+    margin-left: auto; /* Сдвигает последний элемент вправо */
+}
+
+.horizontal-form-group .form-group {
+    flex: 1;
+}
+
+.cards-wrapper .card img {
+    height: 300px;
+    width: 100%;
+    margin: auto;
+    padding: 0px 0;
+}
+
+.custom-height-img {
+    width: 100%;      /* Ширина изображения будет автоматически подстраиваться */
+    height: 100%;       /* Высота изображения будет равна высоте контейнера */
+    object-fit: cover;  /* Обрезать изображение по ширине, сохраняя пропорции */
+    padding: 0;         /* Убираем отступы */
+}
+
+.ship-preview {
+    width: 100%;
+    height: 250px !important;
+    background-size: cover;
+}
+
+.custom-card {
+    height: 300px ; 
+}
+
+.ship-image {
+    width: 100%;
+}
+
+.custom-inf-card-style {
+    padding-top: 30px !important;
+    padding-left: 50px !important; 
+}
+
+
+main {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    padding: 25px 0;
+}
+
+.bin.btn-primary  {
+    background-color: var(--bin-bg) !important;
+    color: var(--bin-color) !important;
+}
+
+.btn.btn-primary:hover {
+    background-color: #fff !important;
+    color: #000 !important;
+}
+
+.badge {
+    position: absolute !important;
+    top: -10px !important;
+    right: -15px;
+    color: var(--badge-color) !important;
+    background-color: var(--badge-bg) !important;
+}
+
+.custom-form-control2 {
+    width: 200px !important;
+}
+
+.custom-btn-form {
+    width: 150px !important;
+}
+
+.justify-end {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.card .form-group {
+    margin-bottom: 25px;
+}
+
+.ship-page img {
+    width: 80%;
+}
+
+.btn-primary {
+    background-color: var(--primary-btn-bg) !important;
+    border-color: var(--primary-btn-bg) !important;
+}
+
+.btn-primary:hover {
+    background-color: hsl(from var(--primary-btn-bg) h s calc(l - 10)) !important;
+    border-color: hsl(from var(--primary-btn-bg) h s calc(l - 10)) !important;
+}
+
+.card-btns {
+    display: flex;
+    justify-content: center;
+}
+
+.card-btns .btn {
+    width: 50%;
+}

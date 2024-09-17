@@ -11,11 +11,11 @@
                     <div class="row">
 
                         <div class="col-md-8">
-                            <input type="text" class="form-control" placeholder="Введите название" name="query" value="{{ query }}">
+                            <input type="text" class="form-control" placeholder="Введите название" name="name" value="{{ name }}">
                         </div>
 
                         <div class="col-md-4">
-                            <button type="submit" class="btn btn-primary w-100">Поиск</button>
+                            <button type="submit" class="bin btn btn-primary w-100">Поиск</button>
                         </div>
                     </div>
 
@@ -23,11 +23,11 @@
             </div>
 
             <div class="col md-4 justify-end">
-                <a href="/orders/{{ draft_order.id }}" class="w-25">
-                    <button type="submit" class="btn btn-primary position-relative w-100">
+                <a href="/flights/{{ draft_flight.id }}/" class="w-25">
+                    <button type="submit" class="bin btn btn-primary position-relative w-100">
                         Корзина
                         <div class="badge position-absolute badge rounded-pill">
-                            {{ draft_order.ships|length }}
+                            {{ ships_count }}
                         </div>
                     </button>
                 </a>

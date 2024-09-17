@@ -1,35 +1,59 @@
 {% load static %}
 
-<div class="card">
 
-    <img src="{{ ship.image }}" class="ship-preview" alt=""/>
+{% if "http://localhost:8000/flights/" in request.build_absolute_uri %}
 
-    <div class="card-body" >
-
-        <div class="card-info">
-
-            <h5 class="card-title">{{ ship.name }}</h5>
-
-            <p class="card-text">{{ ship.description|truncatechars:100 }}</p>
-
-        </div>
-
-        {% if "http://localhost:8000/orders" in request.build_absolute_uri %}
-            <div class="form-group">
-                <label class="form-label">Очередь на подсоединение</label>
-                <input placeholder="Очередь на подсоединение" disabled="" type="number" class="form-control" value={{ ship.queue }}>
+    <div class="card w-100 mb-2 custom-card">
+         <div class="row g-0">
+            <div class="col-md-6 d-flex justify-center custom-height-img">
+                <img src="{{ ship.image }}"  >
             </div>
-        {% endif %}
+            <div class="col-md-6 custom-inf-card-style">
+                <div class="card-body">
+                    <h5 class="card-title">{{ ship.name }} </h5>
+                    <p class="card-text">Дата изготовления: {{ ship.production_date }}</p>
+                    <div class="form-group">
+                        <label class="form-label">Полезная нагрузка (кг):</label>
+                        <input disabled type="number" class="form-control custom-form-control2" value={{ ship.value }}>
+                    </div>
+                    <a href="/ships/{{ ship.id }}/" class="btn btn-primary custom-btn-form">
+                        Подробнее
+                    </a>
+                </div>
+            </div>
+         </div>
+    </div>
 
-        <div class="card-btns">
+{% else %}
 
-            <a href="/ships/{{ ship.id }}" class="btn btn-primary mt5">
-                Открыть
-            </a>
+    <div class="card">
+
+        <img src="{{ ship.image }}" class="ship-preview" alt=""/>
+
+        <div class="card-body" >
+
+            <div class="card-info">
+
+                <h5 class="card-title">{{ ship.name }}</h5>
+
+                <p class="card-text">Дата изготовления: {{ ship.production_date }}</p>
+
+            </div>
+
+            <div class="card-btns">
+
+                <a href="/ships/{{ ship.id }}/" class="btn btn-primary center">
+                    Подробнее
+                </a>
+
+            </div>
 
         </div>
 
     </div>
 
-</div>
+{% endif %}
+
+
+
 
