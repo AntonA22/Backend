@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+    <main class="container">
+
+        <h3  class="text-center">Черновой перелет</h3>
+
+        <span>Статус: {{ flight.get_status }}</span>
+        <span>Дата создания: {{ flight.date_created }}</span>
+
+        <form method="post" action="/flights/{{ flight.id }}/delete/">
+            {% csrf_token %}
+                <button class="btn btn-danger delete-draft-flight-btn" type="submit">
+                    Удалить
+                </button>
+            </a>
+        </form>
+
+        <h4 class="text-center">Космические корабли</h4>
+
+        <div class="cards-wrapper d-flex flex-column">
+
+            {% for ship in flight.get_ships %}
+
+                {% include "ship_card.html" %}
+
+            {% endfor %}
+
+        </div>
+
+    </main>
+{% endblock content %}
