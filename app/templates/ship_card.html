@@ -1,21 +1,21 @@
 {% load static %}
 
 {% if "http://localhost:8000/flights/" in request.build_absolute_uri %}
-    <div class="card w-100 mb5">
+    <div class="card w-100 mb5 custom-card"">
          <div class="row g-0">
-            <div class="col-md-6 d-flex justify-center">
+            <div class="col-md-6 d-flex justify-center custom-height-img">
                 <img src="{{ ship.image.url }}">
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 custom-inf-card-style">
                 <div class="card-body">
                     <h5 class="card-title">{{ ship.name }}</h5>
                     <p class="card-text">Дата изготовления: {{ ship.production_date }}</p>
                     <div class="form-group">
-                        <label class="form-label">Полезная нагрузка (кг)</label>
-                        <input placeholder="Введите полезную нагрузку (кг)" disabled type="number" class="form-control" style="width: 250px" value={{ ship.value }}>
+                        <label class="form-label">Полезная нагрузка (кг):</label>
+                        <input placeholder="Введите полезную нагрузку (кг)"  disabled type="number" class="form-control" style="width: 250px" value={{ ship.value }}>
                     </div>
-                    <a href="/ships/{{ ship.id }}/" class="btn btn-primary" style="width: 100px">
-                        Открыть
+                    <a href="/ships/{{ ship.id }}/" class="btn btn-primary" style="width: 125px">
+                        Подробнее
                     </a>
                 </div>
             </div>
@@ -32,12 +32,12 @@
             <div class="row card-btns">
                 <div class="col d-flex justify-content-center flex-grow-1">
                     <a href="/ships/{{ ship.id }}" class="btn btn-primary">
-                        Открыть
+                        Подробнее
                     </a>
                 </div>
                 <form method="post" action="/ships/{{ ship.id }}/add_to_flight/" class="col d-flex justify-content-center">
                     {% csrf_token %}
-                    <button class="btn btn-secondary add-btn" type="submit">
+                    <button class="btn btn-primary add-btn" type="submit">
                         Добавить
                     </button>
                 </form>

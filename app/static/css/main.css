@@ -57,6 +57,14 @@
     background-color: var(--header-bg);
 }
 
+.custom-navar {
+    color: #fff !important;
+    text-transform: uppercase;
+    font-weight: 500;
+    font-style: normal;
+    font: 14px / 28px DIN Condensed, sans-serif;
+  }
+
 .nav-link, .navbar-brand{
     color: var(--header-color) !important;
 }
@@ -106,7 +114,7 @@
 .cards-wrapper .card {
     background: var(--card-bg);
     border: 1px solid var(--card-border-color);
-    border-radius: 16px;
+    border-radius: 0px;
 }
 
 .cards-wrapper .card .card-body {
@@ -120,10 +128,17 @@
 }
 
 .cards-wrapper .card img {
-    height: 250px;
-    width: 80%;
+    height: 300px;
+    width: 100%;
     margin: auto;
-    padding: 25px 0;
+    padding: 0px 0;
+}
+
+.custom-height-img {
+    width: 100%;      /* Ширина изображения будет автоматически подстраиваться */
+    height: 100%;       /* Высота изображения будет равна высоте контейнера */
+    object-fit: cover;  /* Обрезать изображение по ширине, сохраняя пропорции */
+    padding: 0;         /* Убираем отступы */
 }
 
 .ship-preview {
@@ -132,8 +147,17 @@
     background-size: cover;
 }
 
+.custom-card {
+    height: 300px ; 
+}
+
 .ship-image {
     width: 100%;
+}
+
+.custom-inf-card-style {
+    padding-top: 30px !important;
+    padding-left: 50px !important; 
 }
 
 main {
@@ -164,6 +188,24 @@ main {
 
 .card .form-group {
     margin-bottom: 25px;
+}
+
+.horizontal-form-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 200px;
+}
+
+.horizontal-form-group .form-group {
+    flex: 1;
+}
+
+.custom-form-control {
+    width: 300px !important;
+}
+
+.custom-btn-form {
+    width: 150px !important;
 }
 
 .ship-page img {
