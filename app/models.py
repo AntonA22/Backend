@@ -16,6 +16,7 @@ class Ship(models.Model):
     status = models.IntegerField(choices=STATUS_CHOICES, default=1, verbose_name="Статус")
     image = models.ImageField(default="images/default.png")
     description = models.TextField(verbose_name="Описание", blank=True)
+
     production_date = models.CharField(blank=True, null=True)
 
     def __str__(self):
@@ -36,18 +37,18 @@ class Flight(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь", null=True, related_name='owner')
     moderator = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Модератор", null=True, related_name='moderator')
 
+    launch_cosmodrom = models.CharField(verbose_name="Космодром запуска", blank=True, null=True)
+    arrival_cosmodrom = models.CharField(verbose_name="Космодром прибытия", blank=True, null=True)
+    estimated_launch_date = models.DateTimeField(verbose_name="Предполагаемая дата запуска", blank=True, null=True)
+
     def __str__(self):
         return "Перелет №" + str(self.pk)
 
     def get_ships(self):
-        res = []
-
-        for item in ShipFlight.objects.filter(flight=self):
-            tmp = item.ship
-            tmp.value = item.value
-            res.append(tmp)
-
-        return res
+        return [
+            setattr(item.ship, "value", item.value) or item.ship
+            for item in ShipFlight.objects.filter(flight=self)
+        ]
 
     def get_status(self):
         return dict(STATUS_CHOICES).get(self.status)
@@ -60,8 +61,8 @@ class Flight(models.Model):
 
 
 class ShipFlight(models.Model):
-    ship = models.ForeignKey(Ship, models.CASCADE, blank=True, null=True)
-    flight = models.ForeignKey(Flight, models.CASCADE, blank=True, null=True)
+    ship = models.ForeignKey(Ship, models.DO_NOTHING, blank=True, null=True)
+    flight = models.ForeignKey(Flight, models.DO_NOTHING, blank=True, null=True)
     value = models.IntegerField(verbose_name="Поле м-м", blank=True, null=True)
 
     def __str__(self):
@@ -70,3 +71,4 @@ class ShipFlight(models.Model):
     class Meta:
         verbose_name = "м-м"
         verbose_name_plural = "м-м"
+        db_table = "ship_flight"

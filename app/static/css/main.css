@@ -193,14 +193,14 @@ main {
 .horizontal-form-group {
     display: flex;
     justify-content: space-between;
-    gap: 200px;
+    gap: 100px;
 }
 
 .horizontal-form-group .form-group {
     flex: 1;
 }
 
-.custom-form-control {
+.custom-form-cont2 {
     width: 300px !important;
 }
 

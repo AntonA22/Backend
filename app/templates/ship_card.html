@@ -1,7 +1,7 @@
 {% load static %}
 
 {% if "http://localhost:8000/flights/" in request.build_absolute_uri %}
-    <div class="card w-100 mb5 custom-card"">
+    <div class="card w-100 mb-5 custom-card">
          <div class="row g-0">
             <div class="col-md-6 d-flex justify-center custom-height-img">
                 <img src="{{ ship.image.url }}">
@@ -12,7 +12,7 @@
                     <p class="card-text">Дата изготовления: {{ ship.production_date }}</p>
                     <div class="form-group">
                         <label class="form-label">Полезная нагрузка (кг):</label>
-                        <input placeholder="Введите полезную нагрузку (кг)"  disabled type="number" class="form-control" style="width: 250px" value={{ ship.value }}>
+                        <input placeholder="Введите полезную нагрузку"  disabled type="number" class="form-control" style="width: 255px" value={{ ship.value }}>
                     </div>
                     <a href="/ships/{{ ship.id }}/" class="btn btn-primary" style="width: 125px">
                         Подробнее

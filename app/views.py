@@ -24,7 +24,7 @@ def index(request):
 
 
 def add_ship_to_draft_flight(request, ship_id):
-    ship = Ship.objects.get(pk=ship_id)
+    ship = Ship.objects.get(id=ship_id)
 
     draft_flight = get_draft_flight()
 
@@ -54,19 +54,19 @@ def ship_details(request, ship_id):
     return render(request, "ship_page.html", context)
 
 
-def delete_flight(request, flight_id):
-    with connection.cursor() as cursor:
-        cursor.execute("UPDATE flights SET status = 5 WHERE id = %s", [flight_id])
-
-    return redirect("/")
-
-
 def flight(request, flight_id):
     context = {
         "flight": Flight.objects.get(id=flight_id),
     }
 
     return render(request, "flight_page.html", context)
+
+
+def delete_flight(request, flight_id):
+    with connection.cursor() as cursor:
+        cursor.execute("UPDATE flights SET status = 5 WHERE id = %s", [flight_id])
+
+    return redirect("/")
 
 
 def get_draft_flight():
