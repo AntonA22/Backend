@@ -6,9 +6,6 @@
 
         <h3  class="text-center">Черновой перелет</h3>
 
-        <span>Статус: {{ flight.get_status }}</span>
-        <span>Дата создания: {{ flight.date_created }}</span>
-
         <form method="post" action="/flights/{{ flight.id }}/delete/">
             {% csrf_token %}
                 <button class="btn btn-danger delete-draft-flight-btn" type="submit">

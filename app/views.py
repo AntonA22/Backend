@@ -37,11 +37,11 @@ def add_ship_to_draft_flight(request, ship_id):
     if ShipFlight.objects.filter(flight=draft_flight, ship=ship).exists():
         return redirect("/")
 
-    item = ShipFlight(
+    NewShipFlight = ShipFlight(
         flight=draft_flight,
         ship=ship
     )
-    item.save()
+    NewShipFlight.save()
 
     return redirect("/")
 
@@ -55,6 +55,13 @@ def ship_details(request, ship_id):
 
 
 def flight(request, flight_id):
+    if not Flight.objects.filter(pk=flight_id).exists():
+        return redirect("/")
+    
+    flight = Flight.objects.get(id=flight_id)
+    if flight.status == 5:
+        return redirect("/")
+    
     context = {
         "flight": Flight.objects.get(id=flight_id),
     }
@@ -62,7 +69,11 @@ def flight(request, flight_id):
     return render(request, "flight_page.html", context)
 
 
+
 def delete_flight(request, flight_id):
+    if not Flight.objects.filter(pk=flight_id).exists():
+        return redirect("/")
+
     with connection.cursor() as cursor:
         cursor.execute("UPDATE flights SET status = 5 WHERE id = %s", [flight_id])
 

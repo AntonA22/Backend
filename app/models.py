@@ -61,6 +61,7 @@ class Flight(models.Model):
 
 
 class ShipFlight(models.Model):
+    
     ship = models.ForeignKey(Ship, models.DO_NOTHING, blank=True, null=True)
     flight = models.ForeignKey(Flight, models.DO_NOTHING, blank=True, null=True)
     value = models.IntegerField(verbose_name="Поле м-м", blank=True, null=True)
@@ -72,3 +73,4 @@ class ShipFlight(models.Model):
         verbose_name = "м-м"
         verbose_name_plural = "м-м"
         db_table = "ship_flight"
+        unique_together = ('ship', 'flight')
