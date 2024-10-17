@@ -26,14 +26,21 @@ def get_moderator():
 def search_ships(request):
     ship_name = request.GET.get("ship_name", "")
 
-    ships = Ship.objects.filter(status=1).filter(name__icontains=ship_name)
+    ships = Ship.objects.filter(status=1)
+
+    if ship_name:
+        ships = ships.filter(name__icontains=ship_name)
 
     serializer = ShipSerializer(ships, many=True)
 
     draft_flight = get_draft_flight()
 
+    if draft_flight:
+        ships_count = len(draft_flight.get_ships())
+
     resp = {
         "ships": serializer.data,
+        "ships_count": ships_count,
         "draft_flight": draft_flight.pk if draft_flight else None
     }
 
