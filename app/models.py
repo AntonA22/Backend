@@ -36,7 +36,7 @@ class Flight(models.Model):
     )
 
     status = models.IntegerField(choices=STATUS_CHOICES, default=1, verbose_name="Статус")
-    date_created = models.DateTimeField(default=timezone.now(), verbose_name="Дата создания")
+    date_created = models.DateTimeField(verbose_name="Дата создания")
     date_formation = models.DateTimeField(verbose_name="Дата формирования", blank=True, null=True)
     date_complete = models.DateTimeField(verbose_name="Дата завершения", blank=True, null=True)
 
@@ -49,6 +49,12 @@ class Flight(models.Model):
 
     def __str__(self):
         return "Перелет №" + str(self.pk)
+    
+    def get_ships(self):
+        return [
+            setattr(item.ship, "value", item.value) or item.ship
+            for item in ShipFlight.objects.filter(flight=self)
+        ]
 
     class Meta:
         verbose_name = "Перелет"

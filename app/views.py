@@ -46,10 +46,15 @@ def search_ships(request):
 
     draft_flight = get_draft_flight(request)
 
+    if draft_flight:
+        ships_count = len(draft_flight.get_ships())
+    else:
+        ships_count = 0
+
     resp = {
         "ships": serializer.data,
-        "ships_count": ShipFlight.objects.filter(flight=draft_flight).count() if draft_flight else None,
-        "draft_flight_id": draft_flight.pk if draft_flight else None
+        "ships_count": ships_count,
+        "draft_flight": draft_flight.pk if draft_flight else None
     }
 
     return Response(resp)
@@ -90,11 +95,15 @@ def update_ship(request, ship_id):
 @api_view(["POST"])
 @permission_classes([IsModerator])
 def create_ship(request):
-    ship = Ship.objects.create()
+    ship_data = request.data.copy()
+    ship_data.pop("image", None)  
 
-    serializer = ShipSerializer(ship)
+    serializer = ShipSerializer(data=ship_data)
+    if serializer.is_valid(raise_exception=True):
+        new_ship = serializer.save() 
 
-    return Response(serializer.data)
+        return Response(ShipSerializer(new_ship).data, status=status.HTTP_201_CREATED)
+
 
 
 @api_view(["DELETE"])
@@ -210,6 +219,13 @@ def update_flight(request, flight_id):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     flight = Flight.objects.get(pk=flight_id)
+
+    allowed_fields = ['launch_cosmodrom', 'arrival_cosmodrom', 'estimated_launch_date']
+    data = {key: value for key, value in request.data.items() if key in allowed_fields}
+
+    if not data:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
     serializer = FlightSerializer(flight, data=request.data, partial=True)
 
     if serializer.is_valid():
