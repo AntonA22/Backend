@@ -10,7 +10,7 @@ class Ship(models.Model):
         (2, 'Удалена'),
     )
 
-    name = models.CharField(max_length=100, verbose_name="Название")
+    name = models.CharField(max_length=100, verbose_name="Название", blank=True)
     status = models.IntegerField(choices=STATUS_CHOICES, default=1, verbose_name="Статус")
     image = models.ImageField(default="images/default.png")
     description = models.TextField(verbose_name="Описание", blank=True)

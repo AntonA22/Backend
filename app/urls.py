@@ -2,7 +2,7 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    # Набор методов для услуг
+    # Набор методов для космолетов
     path('api/ships/search/', search_ships),  # GET
     path('api/ships/<int:ship_id>/', get_ship_by_id),  # GET
     path('api/ships/<int:ship_id>/image/', get_ship_image),  # GET
@@ -12,7 +12,7 @@ urlpatterns = [
     path('api/ships/create/', create_ship),  # POST
     path('api/ships/<int:ship_id>/add_to_flight/', add_ship_to_flight),  # POST
 
-    # Набор методов для заявок
+    # Набор методов для перелетов
     path('api/flights/search/', search_flights),  # GET
     path('api/flights/<int:flight_id>/', get_flight_by_id),  # GET
     path('api/flights/<int:flight_id>/update/', update_flight),  # PUT
@@ -29,4 +29,5 @@ urlpatterns = [
     path('api/users/login/', login), # POST
     path('api/users/logout/', logout), # POST
     path('api/users/<int:user_id>/update/', update_user), # PUT
+
 ]

@@ -24,9 +24,9 @@ def get_moderator():
 
 @api_view(["GET"])
 def search_ships(request):
-    query = request.GET.get("query", "")
+    ship_name = request.GET.get("ship_name", "")
 
-    ships = Ship.objects.filter(status=1).filter(name__icontains=query)
+    ships = Ship.objects.filter(status=1).filter(name__icontains=ship_name)
 
     serializer = ShipSerializer(ships, many=True)
 
@@ -73,12 +73,22 @@ def update_ship(request, ship_id):
 
 @api_view(["POST"])
 def create_ship(request):
-    Ship.objects.create()
+    ship_data = request.data.copy()
+    ship_data.pop("image", None)  
 
-    ships = Ship.objects.filter(status=1)
-    serializer = ShipSerializer(ships, many=True)
+    serializer = ShipSerializer(data=ship_data)
+    if serializer.is_valid(raise_exception=True):
+        new_ship = serializer.save() 
 
-    return Response(serializer.data)
+        pic = request.FILES.get("image")
+        if pic is not None:
+            new_ship.image = pic  
+            new_ship.save() 
+
+        ships = Ship.objects.filter(status=1)
+        serializer = ShipSerializer(ships, many=True)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 @api_view(["DELETE"])
@@ -191,7 +201,14 @@ def update_flight(request, flight_id):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     flight = Flight.objects.get(pk=flight_id)
-    serializer = FlightSerializer(flight, data=request.data, many=False, partial=True)
+
+    allowed_fields = ['launch_cosmodrom', 'arrival_cosmodrom', 'estimated_launch_date']
+    data = {key: value for key, value in request.data.items() if key in allowed_fields}
+
+    if not data:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = FlightSerializer(flight, data=data, partial=True)
 
     if serializer.is_valid():
         serializer.save()
