@@ -2,18 +2,17 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    # Набор методов для космолетов
-    path('api/ships/search/', search_ships),  # GET
+    # Набор методов для услуг
+    path('api/ships/', search_ships),  # GET
     path('api/ships/<int:ship_id>/', get_ship_by_id),  # GET
-    path('api/ships/<int:ship_id>/image/', get_ship_image),  # GET
     path('api/ships/<int:ship_id>/update/', update_ship),  # PUT
-    path('api/ships/<int:ship_id>/update_image/', update_ship_image),  # PUT
+    path('api/ships/<int:ship_id>/update_image/', update_ship_image),  # POST
     path('api/ships/<int:ship_id>/delete/', delete_ship),  # DELETE
     path('api/ships/create/', create_ship),  # POST
     path('api/ships/<int:ship_id>/add_to_flight/', add_ship_to_flight),  # POST
 
-    # Набор методов для перелетов
-    path('api/flights/search/', search_flights),  # GET
+    # Набор методов для заявок
+    path('api/flights/', search_flights),  # GET
     path('api/flights/<int:flight_id>/', get_flight_by_id),  # GET
     path('api/flights/<int:flight_id>/update/', update_flight),  # PUT
     path('api/flights/<int:flight_id>/update_status_user/', update_status_user),  # PUT
@@ -28,6 +27,5 @@ urlpatterns = [
     path('api/users/register/', register), # POST
     path('api/users/login/', login), # POST
     path('api/users/logout/', logout), # POST
-    path('api/users/<int:user_id>/update/', update_user), # PUT
-
+    path('api/users/<int:user_id>/update/', update_user) # PUT
 ]

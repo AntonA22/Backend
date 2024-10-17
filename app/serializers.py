@@ -4,12 +4,29 @@ from .models import *
 
 
 class ShipSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     def get_image(self, ship):
         return ship.image.url.replace("minio", "localhost", 1)
 
     class Meta:
         model = Ship
         fields = "__all__"
+
+
+class ShipItemSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    value = serializers.SerializerMethodField()
+
+    def get_image(self, ship):
+        return ship.image.url.replace("minio", "localhost", 1)
+
+    def get_value(self, ship):
+        return self.context.get("value")
+
+    class Meta:
+        model = Ship
+        fields = ("id", "name", "image", "value")
 
 
 class FlightSerializer(serializers.ModelSerializer):
@@ -26,8 +43,7 @@ class FlightSerializer(serializers.ModelSerializer):
             
     def get_ships(self, flight):
         items = ShipFlight.objects.filter(flight=flight)
-        serializer = ShipSerializer([item.ship for item in items], many=True)
-        return serializer.data
+        return [ShipItemSerializer(item.ship, context={"value": item.value}).data for item in items]
 
     class Meta:
         model = Flight
@@ -59,21 +75,19 @@ class ShipFlightSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'email', 'password', 'first_name', 'last_name', 'date_joined', 'password', 'username')
+        fields = ('id', 'email', 'username')
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'email', 'password', 'first_name', 'last_name', 'username')
+        fields = ('id', 'email', 'password', 'username')
         write_only_fields = ('password',)
         read_only_fields = ('id',)
 
     def create(self, validated_data):
         user = User.objects.create(
             email=validated_data['email'],
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name'],
             username=validated_data['username']
         )
 

@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "7a1d5a99-fae2-43b6-ab48-1c2e610b385a",
+		"_postman_id": "437e8d7c-7758-453e-8fc8-2bafd868ce58",
 		"name": "Lab3",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "33669280"
@@ -12,7 +12,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8000/api/ships/search",
+					"raw": "http://localhost:8000/api/ships/",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -21,7 +21,7 @@
 					"path": [
 						"api",
 						"ships",
-						"search"
+						""
 					]
 				}
 			},
@@ -64,7 +64,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8000/api/ships/20/update/",
+					"raw": "http://localhost:8000/api/ships/1/update/",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -73,7 +73,7 @@
 					"path": [
 						"api",
 						"ships",
-						"20",
+						"1",
 						"update",
 						""
 					]
@@ -109,7 +109,7 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8000/api/ships/20/delete/",
+					"raw": "http://localhost:8000/api/ships/1/delete/",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -118,7 +118,7 @@
 					"path": [
 						"api",
 						"ships",
-						"20",
+						"1",
 						"delete",
 						""
 					]
@@ -132,30 +132,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8000/api/ships/37/add_to_flight/",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"ships",
-						"37",
-						"add_to_flight",
-						""
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Фото космолета",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8000/api/ships/1/image/",
+					"raw": "http://localhost:8000/api/ships/1/add_to_flight/",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -165,7 +142,7 @@
 						"api",
 						"ships",
 						"1",
-						"image",
+						"add_to_flight",
 						""
 					]
 				}
@@ -211,7 +188,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8000/api/flights/search/?date_start=2023-11-11&date_end=2024-09-11&status=3",
+					"raw": "http://localhost:8000/api/flights/?date_start=2023-11-11&date_end=2025-09-11&status=3",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -220,7 +197,6 @@
 					"path": [
 						"api",
 						"flights",
-						"search",
 						""
 					],
 					"query": [
@@ -230,7 +206,7 @@
 						},
 						{
 							"key": "date_end",
-							"value": "2024-09-11"
+							"value": "2025-09-11"
 						},
 						{
 							"key": "status",
@@ -247,7 +223,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8000/api/flights/67/",
+					"raw": "http://localhost:8000/api/flights/31/",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -256,7 +232,7 @@
 					"path": [
 						"api",
 						"flights",
-						"67",
+						"31",
 						""
 					]
 				}
@@ -278,7 +254,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8000/api/flights/43/update/",
+					"raw": "http://localhost:8000/api/flights/31/update/",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -287,7 +263,7 @@
 					"path": [
 						"api",
 						"flights",
-						"43",
+						"31",
 						"update",
 						""
 					]
@@ -310,7 +286,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8000/api/flights/93/update_ship/45/",
+					"raw": "http://localhost:8000/api/flights/31/update_ship/1/",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -319,9 +295,9 @@
 					"path": [
 						"api",
 						"flights",
-						"93",
+						"31",
 						"update_ship",
-						"45",
+						"1",
 						""
 					]
 				}
@@ -334,7 +310,7 @@
 				"method": "PUT",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8000/api/flights/67/update_status_user/",
+					"raw": "http://localhost:8000/api/flights/31/update_status_user/",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -343,7 +319,7 @@
 					"path": [
 						"api",
 						"flights",
-						"67",
+						"31",
 						"update_status_user",
 						""
 					]
@@ -389,7 +365,7 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8000/api/flights/43/delete/",
+					"raw": "http://localhost:8000/api/flights/31/delete/",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -398,7 +374,7 @@
 					"path": [
 						"api",
 						"flights",
-						"43",
+						"31",
 						"delete",
 						""
 					]
@@ -412,7 +388,7 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8000/api/flights/30/delete_ship/2/",
+					"raw": "http://localhost:8000/api/flights/31/delete_ship/1/",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -421,9 +397,9 @@
 					"path": [
 						"api",
 						"flights",
-						"30",
+						"31",
 						"delete_ship",
-						"2",
+						"1",
 						""
 					]
 				}

@@ -10,12 +10,12 @@ class Ship(models.Model):
         (2, 'Удалена'),
     )
 
-    name = models.CharField(max_length=100, verbose_name="Название", blank=True)
+    name = models.CharField(max_length=100, verbose_name="Название")
     status = models.IntegerField(choices=STATUS_CHOICES, default=1, verbose_name="Статус")
     image = models.ImageField(default="images/default.png")
     description = models.TextField(verbose_name="Описание", blank=True)
 
-    creation_date = models.CharField(blank=True, null=True)
+    creation_date = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.name
@@ -40,8 +40,8 @@ class Flight(models.Model):
     date_formation = models.DateTimeField(verbose_name="Дата формирования", blank=True, null=True)
     date_complete = models.DateTimeField(verbose_name="Дата завершения", blank=True, null=True)
 
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь", null=True, related_name='owner')
-    moderator = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Модератор", null=True, related_name='moderator')
+    owner = models.ForeignKey(User, on_delete=models.DO_NOTHING, verbose_name="Пользователь", null=True, related_name='owner')
+    moderator = models.ForeignKey(User, on_delete=models.DO_NOTHING, verbose_name="Модератор", null=True, related_name='moderator')
 
     launch_cosmodrom = models.CharField(blank=True, null=True)
     arrival_cosmodrom = models.CharField(blank=True, null=True)
@@ -49,7 +49,7 @@ class Flight(models.Model):
 
     def __str__(self):
         return "Перелет №" + str(self.pk)
-
+    
     def get_ships(self):
         return [
             setattr(item.ship, "value", item.value) or item.ship
@@ -75,3 +75,4 @@ class ShipFlight(models.Model):
         verbose_name = "м-м"
         verbose_name_plural = "м-м"
         db_table = "ship_flight"
+        unique_together = ('ship', 'flight')

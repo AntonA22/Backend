@@ -47,6 +47,7 @@ def search_ships(request):
     return Response(resp)
 
 
+
 @api_view(["GET"])
 def get_ship_by_id(request, ship_id):
     if not Ship.objects.filter(pk=ship_id).exists():
@@ -70,7 +71,7 @@ def update_ship(request, ship_id):
         ship.image = image
         ship.save()
 
-    serializer = ShipSerializer(ship, data=request.data, many=False, partial=True)
+    serializer = ShipSerializer(ship, data=request.data, partial=True)
 
     if serializer.is_valid():
         serializer.save()
@@ -87,15 +88,7 @@ def create_ship(request):
     if serializer.is_valid(raise_exception=True):
         new_ship = serializer.save() 
 
-        pic = request.FILES.get("image")
-        if pic is not None:
-            new_ship.image = pic  
-            new_ship.save() 
-
-        ships = Ship.objects.filter(status=1)
-        serializer = ShipSerializer(ships, many=True)
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(ShipSerializer(new_ship).data, status=status.HTTP_201_CREATED)
 
 
 @api_view(["DELETE"])
@@ -130,26 +123,14 @@ def add_ship_to_flight(request, ship_id):
 
     if ShipFlight.objects.filter(flight=draft_flight, ship=ship).exists():
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    
+        
     item = ShipFlight.objects.create()
     item.flight = draft_flight
     item.ship = ship
     item.save()
 
-    serializer = FlightSerializer(draft_flight, many=False)
-
+    serializer = FlightSerializer(draft_flight)
     return Response(serializer.data["ships"])
-
-
-@api_view(["GET"])
-def get_ship_image(request, ship_id):
-    if not Ship.objects.filter(pk=ship_id).exists():
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    ship = Ship.objects.get(pk=ship_id)
-    response = requests.get(ship.image.url.replace("localhost", "minio"))
-
-    return HttpResponse(response, content_type="image/png")
 
 
 @api_view(["POST"])
@@ -312,7 +293,7 @@ def update_ship_in_flight(request, flight_id, ship_id):
 
     item = ShipFlight.objects.get(ship_id=ship_id, flight_id=flight_id)
 
-    serializer = ShipFlightSerializer(item, data=request.data, many=False, partial=True)
+    serializer = ShipFlightSerializer(item, data=request.data,  partial=True)
 
     if serializer.is_valid():
         serializer.save()
@@ -345,7 +326,9 @@ def login(request):
     if user is None:
         return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-    return Response(status=status.HTTP_200_OK)
+    serializer = UserSerializer(user)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
@@ -359,7 +342,7 @@ def update_user(request, user_id):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     user = User.objects.get(pk=user_id)
-    serializer = UserSerializer(user, data=request.data, many=False, partial=True)
+    serializer = UserSerializer(user, data=request.data, partial=True)
 
     if not serializer.is_valid():
         return Response(status=status.HTTP_409_CONFLICT)
