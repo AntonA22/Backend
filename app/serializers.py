@@ -76,7 +76,7 @@ class ShipFlightSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'email', 'username')
+        fields = ('id', 'username', 'email')
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):

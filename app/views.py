@@ -27,7 +27,7 @@ def get_draft_flight(request):
     method='get',
     manual_parameters=[
         openapi.Parameter(
-            'query',
+            'ship_name',
             openapi.IN_QUERY,
             type=openapi.TYPE_STRING
         )
