@@ -1,51 +1,61 @@
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from rest_framework.permissions import BasePermission
+from rest_framework import permissions
+from rest_framework import exceptions
+from .redis import session_storage
+from rest_framework import authentication
+from django.contrib.auth.models import AnonymousUser
 
-from .jwt_helper import get_jwt_payload, get_access_token
 
-
-class IsAuthenticated(BasePermission):
+class IsAuth(permissions.BasePermission):
     def has_permission(self, request, view):
-        token = get_access_token(request)
-
-        if token is None:
+        session_id = request.COOKIES.get("session_id")
+        if session_id is None:
             return False
-
-        if token in cache:
-            return None
-
         try:
-            payload = get_jwt_payload(token)
-        except:
+            session_storage.get(session_id).decode("utf-8")
+        except Exception as e:
             return False
-
+        return True
+    
+class AuthBySessionID(authentication.BaseAuthentication):
+    def authenticate(self, request):
+        session_id = request.COOKIES.get("session_id")
+        if session_id is None:
+            raise exceptions.AuthenticationFailed("Нет сессии")
         try:
-            user = User.objects.get(pk=payload["user_id"])
-        except:
-            return False
-
-        return user.is_active
-
-
-class IsModerator(BasePermission):
+            username = session_storage.get(session_id).decode("utf-8")
+        except Exception as e:
+            raise exceptions.AuthenticationFailed("Сессия с таким ID не найдена в хранилище сессий")
+        user = User.objects.get(username=username)
+        if user is None:
+            raise exceptions.AuthenticationFailed("Нет пользователя с именем, соответствующим сессии, в БД")
+        return user, None
+    
+class AuthBySessionIDIfExists(authentication.BaseAuthentication):
+    def authenticate(self, request):
+        session_id = request.COOKIES.get("session_id")
+        if session_id is None:
+            return AnonymousUser(), None
+        try:
+            username = session_storage.get(session_id).decode("utf-8")
+        except Exception as e:
+            return None, None
+        user = User.objects.get(username=username)
+        return user, None
+    
+class IsManagerAuth(permissions.BasePermission):
     def has_permission(self, request, view):
-        token = get_access_token(request)
-
-        if token is None:
+        session_id = request.COOKIES.get("session_id")
+        if session_id is None:
             return False
-
-        if token in cache:
-            return None
-
         try:
-            payload = get_jwt_payload(token)
-        except:
+            username = session_storage.get(session_id).decode("utf-8")
+        except Exception as e:
             return False
-
-        try:
-            user = User.objects.get(pk=payload["user_id"])
-        except:
+        user = User.objects.filter(username=username).first()
+        if user is None:
             return False
+        return user.is_superuser
 
-        return user.is_staff

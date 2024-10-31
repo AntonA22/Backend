@@ -15,7 +15,7 @@ class Ship(models.Model):
     image = models.ImageField(default="images/default.png")
     description = models.TextField(verbose_name="Описание", blank=True)
 
-    creation_date = models.DateField(blank=True, null=True)
+    creation_date = models.DateField(blank=True)
 
     def __str__(self):
         return self.name
@@ -36,12 +36,12 @@ class Flight(models.Model):
     )
 
     status = models.IntegerField(choices=STATUS_CHOICES, default=1, verbose_name="Статус")
-    date_created = models.DateTimeField(verbose_name="Дата создания")
+    date_created = models.DateTimeField(default=timezone.now(), verbose_name="Дата создания")
     date_formation = models.DateTimeField(verbose_name="Дата формирования", blank=True, null=True)
     date_complete = models.DateTimeField(verbose_name="Дата завершения", blank=True, null=True)
 
     owner = models.ForeignKey(User, on_delete=models.DO_NOTHING, verbose_name="Пользователь", null=True, related_name='owner')
-    moderator = models.ForeignKey(User, on_delete=models.DO_NOTHING, verbose_name="Модератор", null=True, related_name='moderator')
+    moderator = models.ForeignKey(User, on_delete=models.DO_NOTHING, verbose_name="Оператор", null=True, related_name='moderator')
 
     launch_cosmodrom = models.CharField(blank=True, null=True)
     arrival_cosmodrom = models.CharField(blank=True, null=True)

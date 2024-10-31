@@ -5,15 +5,22 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from .redis import session_storage
+from rest_framework.permissions import AllowAny
+import uuid
+from rest_framework.parsers import FormParser
 
-from .jwt_helper import *
+from rest_framework.decorators import (
+    api_view,
+    permission_classes,
+    authentication_classes,
+    parser_classes,
+)
 from .permissions import *
 from .serializers import *
-from .utils import identity_user
-
 
 def get_draft_flight(request):
-    user = identity_user(request)
+    user = request.user
 
     if user is None:
         return None
@@ -21,7 +28,6 @@ def get_draft_flight(request):
     flight = Flight.objects.filter(owner=user).filter(status=1).first()
 
     return flight
-
 
 @swagger_auto_schema(
     method='get',
@@ -34,6 +40,8 @@ def get_draft_flight(request):
     ]
 )
 @api_view(["GET"])
+@permission_classes([AllowAny])
+@authentication_classes([AuthBySessionIDIfExists])
 def search_ships(request):
     ship_name = request.GET.get("ship_name", "")
 
@@ -44,7 +52,12 @@ def search_ships(request):
 
     serializer = ShipSerializer(ships, many=True)
 
-    draft_flight = get_draft_flight(request)
+    draft_flight = None
+    if hasattr(request, 'user') and request.user.is_authenticated:
+        try:
+            draft_flight = Flight.objects.get(status=1, owner=request.user)
+        except Flight.DoesNotExist:
+            draft_flight = None
 
     if draft_flight:
         ships_count = len(draft_flight.get_ships())
@@ -54,13 +67,31 @@ def search_ships(request):
     resp = {
         "ships": serializer.data,
         "ships_count": ships_count,
-        "draft_flight": draft_flight.pk if draft_flight else None
+        "draft_flight_id": draft_flight.pk if draft_flight else None
     }
 
     return Response(resp)
 
-
+@swagger_auto_schema(
+    method="get",
+    manual_parameters=[
+        openapi.Parameter(
+            name="ship_id",
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_INTEGER,
+            description="ID искомого космолета"
+        )
+    ],
+    responses={
+        status.HTTP_200_OK: openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            description="космолет, найденный по ID",
+        ),
+        status.HTTP_404_NOT_FOUND: "космолет не найден",
+    },
+)
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def get_ship_by_id(request, ship_id):
     if not Ship.objects.filter(pk=ship_id).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -71,8 +102,29 @@ def get_ship_by_id(request, ship_id):
     return Response(serializer.data)
 
 
+@swagger_auto_schema(
+    method="put",
+    request_body=ShipSerializer,
+    manual_parameters=[
+        openapi.Parameter(
+            name="ship_id",
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_INTEGER,
+            description="ID обновляемого космолета"
+        )
+    ],
+    responses={
+        status.HTTP_200_OK: openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            description="Обновленные данные космолета",
+        ),
+        status.HTTP_403_FORBIDDEN: "Вы не вошли в систему как модератор",
+        status.HTTP_404_NOT_FOUND: "космолет не найден",
+        status.HTTP_400_BAD_REQUEST: "Неверные данные",
+    },
+)
 @api_view(["PUT"])
-@permission_classes([IsModerator])
+@permission_classes([IsManagerAuth])
 def update_ship(request, ship_id):
     if not Ship.objects.filter(pk=ship_id).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -91,9 +143,20 @@ def update_ship(request, ship_id):
 
     return Response(serializer.data)
 
-
+@swagger_auto_schema(
+    method="post",
+    request_body=ShipSerializer,
+    responses={
+        status.HTTP_201_CREATED: openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            description="Созданный космолет",
+        ),
+        status.HTTP_400_BAD_REQUEST: "Неверные данные",
+        status.HTTP_403_FORBIDDEN: "Вы не вошли в систему как модератор",
+    },
+)
 @api_view(["POST"])
-@permission_classes([IsModerator])
+@permission_classes([IsManagerAuth])
 def create_ship(request):
     ship_data = request.data.copy()
     ship_data.pop("image", None)  
@@ -104,10 +167,28 @@ def create_ship(request):
 
         return Response(ShipSerializer(new_ship).data, status=status.HTTP_201_CREATED)
 
-
-
+@swagger_auto_schema(
+    method="delete",
+    manual_parameters=[
+        openapi.Parameter(
+            name="ship_id",
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_INTEGER,
+            description="ID удаляемого космолета"
+        )
+    ],
+    responses={
+        status.HTTP_200_OK: openapi.Schema(
+            type=openapi.TYPE_ARRAY,
+            items=openapi.Schema(type=openapi.TYPE_OBJECT),
+            description="Обновленный список космолетов после удаления",
+        ),
+        status.HTTP_403_FORBIDDEN: "Вы не вошли в систему как модератор",
+        status.HTTP_404_NOT_FOUND: "Космолет не найден",
+    },
+)
 @api_view(["DELETE"])
-@permission_classes([IsModerator])
+@permission_classes([IsManagerAuth])
 def delete_ship(request, ship_id):
     if not Ship.objects.filter(pk=ship_id).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -121,9 +202,31 @@ def delete_ship(request, ship_id):
 
     return Response(serializer.data)
 
-
+@swagger_auto_schema(
+    method="post",
+    manual_parameters=[
+        openapi.Parameter(
+            name="ship_id",
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_INTEGER,
+            description="ID космолета, добавляемого в перелет"
+        )
+    ],
+    responses={
+        status.HTTP_201_CREATED: openapi.Schema(
+            type=openapi.TYPE_ARRAY,
+            items=openapi.Schema(type=openapi.TYPE_OBJECT),
+            description="Обновленный список космолетов в перелете-черновике",
+        ),
+        status.HTTP_404_NOT_FOUND: "космолет не найден",
+        status.HTTP_400_BAD_REQUEST: "космолет уже добавлен в черновик",
+        status.HTTP_403_FORBIDDEN: "Вы не вошли в систему",
+        status.HTTP_500_INTERNAL_SERVER_ERROR: "Ошибка при создании связки",
+    },
+)
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuth])
+@authentication_classes([AuthBySessionID])
 def add_ship_to_flight(request, ship_id):
     if not Ship.objects.filter(pk=ship_id).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -135,7 +238,7 @@ def add_ship_to_flight(request, ship_id):
     if draft_flight is None:
         draft_flight = Flight.objects.create()
         draft_flight.date_created = timezone.now()
-        draft_flight.owner = identity_user(request)
+        draft_flight.owner = request.user
         draft_flight.save()
 
     if ShipFlight.objects.filter(flight=draft_flight, ship=ship).exists():
@@ -149,9 +252,35 @@ def add_ship_to_flight(request, ship_id):
     serializer = FlightSerializer(draft_flight)
     return Response(serializer.data["ships"])
 
-
+@swagger_auto_schema(
+    method="post",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            "image": openapi.Schema(type=openapi.TYPE_FILE, description="Новое изображение для космолета"),
+        },
+        required=["image"]
+    ),
+    manual_parameters=[
+        openapi.Parameter(
+            name="ship_id",
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_INTEGER,
+            description="ID  космолета, для которой загружается/изменяется изображение"
+        )
+    ],
+    responses={
+        status.HTTP_200_OK: openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            description="Обновленная информация о космолете с новым изображением",
+        ),
+        status.HTTP_400_BAD_REQUEST: "Изображение не предоставлено",
+        status.HTTP_403_FORBIDDEN: "Вы не вошли в систему как модератор",
+        status.HTTP_404_NOT_FOUND: "космолет не найден",
+    },
+)
 @api_view(["POST"])
-@permission_classes([IsModerator])
+@permission_classes([IsManagerAuth])
 def update_ship_image(request, ship_id):
     if not Ship.objects.filter(pk=ship_id).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -167,38 +296,82 @@ def update_ship_image(request, ship_id):
 
     return Response(serializer.data)
 
-
+@swagger_auto_schema(
+    method="get",
+    manual_parameters=[
+        openapi.Parameter(
+            name="status",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            description="Фильтр по статусу отправки",
+        ),
+        openapi.Parameter(
+            name="date_formation_start",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            format=openapi.FORMAT_DATETIME,
+            description="Начальная дата формирования (формат: YYYY-MM-DDTHH:MM:SS)",
+        ),
+        openapi.Parameter(
+            name="date_formation_end",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            format=openapi.FORMAT_DATETIME,
+            description="Конечная дата формирования (формат: YYYY-MM-DDTHH:MM:SS)",
+        ),
+    ],
+    responses={
+        status.HTTP_200_OK: FlightSerializer(many=True),
+        status.HTTP_400_BAD_REQUEST: "Некорректный запрос",
+        status.HTTP_403_FORBIDDEN: "Вы не вошли в систему",
+    },
+)
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuth])
+@authentication_classes([AuthBySessionID])
 def search_flights(request):
     status_id = int(request.GET.get("status", 0))
     date_formation_start = request.GET.get("date_formation_start")
     date_formation_end = request.GET.get("date_formation_end")
 
-    flights = Flight.objects.exclude(status__in=[1, 5])
-
-    user = identity_user(request)
-    if not user.is_staff:
-        flights = flights.filter(owner=user)
-
+    #flights = Flight.objects.exclude(status__in=[1, 5])
+    flights = Flight.objects
+    if not request.user.is_superuser:
+        flights = flights.filter(owner=request.user)
     if status_id > 0:
         flights = flights.filter(status=status_id)
 
     if date_formation_start and parse_datetime(date_formation_start):
-        flights = flights.filter(date_formation__gte=parse_datetime(date_formation_start))
+        flights = flights.filter(formation_date__gte=parse_datetime(date_formation_start))
 
     if date_formation_end and parse_datetime(date_formation_end):
-        flights = flights.filter(date_formation__lt=parse_datetime(date_formation_end))
+        flights = flights.filter(formation_date__lt=parse_datetime(date_formation_end))
 
     serializer = FlightsSerializer(flights, many=True)
 
     return Response(serializer.data)
 
-
+@swagger_auto_schema(
+    method="get",
+    manual_parameters=[
+        openapi.Parameter(
+            name="flight_id",
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_INTEGER,
+            description="ID искомого перелета",
+        ),
+    ],
+    responses={
+        status.HTTP_200_OK: FlightSerializer(),
+        status.HTTP_403_FORBIDDEN: "Вы не вошли в систему",
+        status.HTTP_404_NOT_FOUND: "Перелет не найден",
+    },
+)
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuth])
+@authentication_classes([AuthBySessionID])
 def get_flight_by_id(request, flight_id):
-    user = identity_user(request)
+    user = request.user
 
     if not Flight.objects.filter(pk=flight_id, owner=user).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -208,12 +381,45 @@ def get_flight_by_id(request, flight_id):
 
     return Response(serializer.data)
 
-
-@swagger_auto_schema(method='put', request_body=FlightSerializer)
+@swagger_auto_schema(
+    method="put",
+    manual_parameters=[
+        openapi.Parameter(
+            name="flight_id",
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_INTEGER,
+            description="ID изменяемого перелета",
+        )
+    ],
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            "launch_cosmodrom": openapi.Schema(
+                type=openapi.TYPE_STRING,
+                description="Космодром отправки:",
+            ),
+            "arrival_cosmodrom": openapi.Schema(
+                type=openapi.TYPE_STRING,
+                description="Космодром прилета:",
+            ),
+            "estimated_launch_date": openapi.Schema(
+                type=openapi.TYPE_STRING,
+                description="Предполагаемая дата запуска:",
+            ),
+        },
+    ),
+    responses={
+        status.HTTP_200_OK: FlightSerializer(),
+        status.HTTP_400_BAD_REQUEST: "Нет данных для обновления или поля не разрешены",
+        status.HTTP_403_FORBIDDEN: "Доступ запрещен",
+        status.HTTP_404_NOT_FOUND: "Перелет не найден",
+    },
+)
 @api_view(["PUT"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuth])
+@authentication_classes([AuthBySessionID])
 def update_flight(request, flight_id):
-    user = identity_user(request)
+    user = request.user
 
     if not Flight.objects.filter(pk=flight_id, owner=user).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -226,23 +432,44 @@ def update_flight(request, flight_id):
     if not data:
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    serializer = FlightSerializer(flight, data=request.data, partial=True)
+    serializer = FlightSerializer(flight, data=data, partial=True)
 
     if serializer.is_valid():
         serializer.save()
 
     return Response(serializer.data)
 
-
+@swagger_auto_schema(
+    method="put",
+    manual_parameters=[
+        openapi.Parameter(
+            name="flight_id",
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_INTEGER,
+            description="ID перелета, формируемой создателем",
+        ),
+    ],
+    responses={
+        status.HTTP_200_OK: FlightSerializer(),
+        status.HTTP_400_BAD_REQUEST: "Не заполнены обязательные поля: [поля, которые не заполнены]",
+        status.HTTP_403_FORBIDDEN: "Доступ запрещен",
+        status.HTTP_404_NOT_FOUND: "Перелет не найден",
+        status.HTTP_405_METHOD_NOT_ALLOWED: "Перелет не в статусе 'Черновик'",
+    },
+)
 @api_view(["PUT"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuth])
+@authentication_classes([AuthBySessionID])
 def update_status_user(request, flight_id):
-    user = identity_user(request)
+    user = request.user
 
     if not Flight.objects.filter(pk=flight_id, owner=user).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     flight = Flight.objects.get(pk=flight_id)
+
+    if flight.status != 1:
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     flight.status = 2
     flight.date_formation = timezone.now()
@@ -252,9 +479,36 @@ def update_status_user(request, flight_id):
 
     return Response(serializer.data)
 
-
+@swagger_auto_schema(
+    method="put",
+    manual_parameters=[
+        openapi.Parameter(
+            name="flight_id",
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_INTEGER,
+            description="ID заявки, обрабатываемой модератором",
+        ),
+    ],
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            "status": openapi.Schema(
+                type=openapi.TYPE_INTEGER,
+                description="Новый статус отправки (3 для завершения, 4 для отклонения)",
+            ),
+        },
+        required=["status"],
+    ),
+    responses={
+        status.HTTP_200_OK: FlightSerializer(),
+        status.HTTP_403_FORBIDDEN: "Вы не вошли в систему как модератор",
+        status.HTTP_404_NOT_FOUND: "Перелет не найдена",
+        status.HTTP_405_METHOD_NOT_ALLOWED: "перелет не статусе 'Сформирован'",
+    },
+)
 @api_view(["PUT"])
-@permission_classes([IsModerator])
+@permission_classes([IsManagerAuth])
+@authentication_classes([AuthBySessionID])
 def update_status_admin(request, flight_id):
     if not Flight.objects.filter(pk=flight_id).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -271,18 +525,35 @@ def update_status_admin(request, flight_id):
 
     flight.status = request_status
     flight.date_complete = timezone.now()
-    flight.moderator = identity_user(request)
+    flight.moderator = request.user
     flight.save()
 
     serializer = FlightSerializer(flight)
 
     return Response(serializer.data)
 
-
+@swagger_auto_schema(
+    method="delete",
+    manual_parameters=[
+        openapi.Parameter(
+            name="flight_id",
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_INTEGER,
+            description="ID удаляемого перелета",
+        ),
+    ],
+    responses={
+        status.HTTP_200_OK: FlightSerializer(),
+        status.HTTP_403_FORBIDDEN: "Доступ запрещен",
+        status.HTTP_404_NOT_FOUND: "перелет не найден",
+        status.HTTP_405_METHOD_NOT_ALLOWED: "Удаление возможно только для перелета в статусе 'Черновик'",
+    },
+)
 @api_view(["DELETE"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuth])
+@authentication_classes([AuthBySessionID])
 def delete_flight(request, flight_id):
-    user = identity_user(request)
+    user = request.user
 
     if not Flight.objects.filter(pk=flight_id, owner=user).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -297,11 +568,36 @@ def delete_flight(request, flight_id):
 
     return Response(status=status.HTTP_200_OK)
 
-
+@swagger_auto_schema(
+    method="delete",
+    manual_parameters=[
+        openapi.Parameter(
+            name="ship_id",
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_INTEGER,
+            description="ID космолета"
+        ),
+        openapi.Parameter(
+            name="flight_id",
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_INTEGER,
+            description="ID перелета"
+        ),
+    ],
+    responses={
+        status.HTTP_200_OK: openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            description="Обновлённые данные перелета после удаления космолета",
+        ),
+        status.HTTP_403_FORBIDDEN: "Доступ запрещен",
+        status.HTTP_404_NOT_FOUND: "Связь между космолетом и перелетом не найдена",
+    },
+)
 @api_view(["DELETE"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuth])
+@authentication_classes([AuthBySessionID])
 def delete_ship_from_flight(request, flight_id, ship_id):
-    user = identity_user(request)
+    user = request.user
 
     if not Flight.objects.filter(pk=flight_id, owner=user).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -323,10 +619,40 @@ def delete_ship_from_flight(request, flight_id, ship_id):
 
     return Response(ships)
 
-
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def get_ship_flight(request, flight_id, ship_id):
+# @swagger_auto_schema(
+#     method="put",
+#     manual_parameters=[
+#         openapi.Parameter(
+#             name="ship_flight_id",
+#             in_=openapi.IN_PATH,
+#             type=openapi.TYPE_INTEGER,
+#             description="ID связи между космолетом и перелетом, которую нужно обновить"
+#         ),
+#     ],
+#     request_body=openapi.Schema(
+#         type=openapi.TYPE_OBJECT,
+#         properties={
+#             "value": openapi.Schema(
+#                 type=openapi.TYPE_INTEGER,
+#                 description="Новая полезная нагрузка"
+#             ),
+#         },
+#         required=["value"],
+#         description="Обновлённые данные перелета и космодрома"
+#     ),
+#     responses={
+#         status.HTTP_200_OK: openapi.Schema(
+#             type=openapi.TYPE_OBJECT,
+#             description="Обновлённые данные перелета и космодрома",
+#         ),
+#         status.HTTP_403_FORBIDDEN: "Доступ запрещен",
+#         status.HTTP_404_NOT_FOUND: "Связь между космодромом и перелетом не найдена",
+#         status.HTTP_400_BAD_REQUEST: "Количество не предоставлено",
+#     },
+# )
+# @api_view(["GET"])
+# @permission_classes([IsAuthenticated])
+# def get_ship_flight(request, flight_id, ship_id):
     user = identity_user(request)
 
     if not Flight.objects.filter(pk=flight_id, owner=user).exists():
@@ -341,12 +667,48 @@ def get_ship_flight(request, flight_id, ship_id):
 
     return Response(serializer.data)
 
-
-@swagger_auto_schema(method='PUT', request_body=ShipFlightSerializer)
+@swagger_auto_schema(
+    method="put",
+    manual_parameters=[
+        openapi.Parameter(
+            name="ship_id",
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_INTEGER,
+            description="ID космолета"
+        ),
+        openapi.Parameter(
+            name="flight_id",
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_INTEGER,
+            description="ID перелета"
+        )
+    ],
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            "value": openapi.Schema(
+                type=openapi.TYPE_INTEGER,
+                description="Новая полезная нагрузка"
+            ),
+        },
+        required=["value"],
+        description="Обновлённые данные перелета и космодрома"
+    ),
+    responses={
+        status.HTTP_200_OK: openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            description="Обновлённые данные перелета и космодрома",
+        ),
+        status.HTTP_403_FORBIDDEN: "Доступ запрещен",
+        status.HTTP_404_NOT_FOUND: "Связь между космодромом и перелетом не найдена",
+        status.HTTP_400_BAD_REQUEST: "Количество не предоставлено",
+    },
+)
 @api_view(["PUT"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuth])
+@authentication_classes([AuthBySessionID])
 def update_ship_in_flight(request, flight_id, ship_id):
-    user = identity_user(request)
+    user = request.user
 
     if not Flight.objects.filter(pk=flight_id, owner=user).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -364,31 +726,52 @@ def update_ship_in_flight(request, flight_id, ship_id):
     return Response(serializer.data)
 
 
-@swagger_auto_schema(method='post', request_body=UserLoginSerializer)
+@swagger_auto_schema(
+    method="post",
+    manual_parameters=[
+        openapi.Parameter(
+            "username",
+            type=openapi.TYPE_STRING,
+            description="username",
+            in_=openapi.IN_FORM,
+            required=True,
+        ),
+        openapi.Parameter(
+            "password",
+            type=openapi.TYPE_STRING,
+            description="password",
+            in_=openapi.IN_FORM,
+            required=True,
+        ),
+    ],
+)
 @api_view(["POST"])
+@parser_classes((FormParser,))
+@permission_classes([AllowAny])
 def login(request):
-    serializer = UserLoginSerializer(data=request.data)
+    username = request.POST.get("username")
+    password = request.POST.get("password")
+    user = authenticate(username=username, password=password)
+    if user is not None:
+        session_id = str(uuid.uuid4())
+        session_storage.set(session_id, username)
+        response = Response(status=status.HTTP_200_OK)
+        response.set_cookie("session_id", session_id, samesite="lax")
+        return response
+    return Response(
+        {"error": "Invalid Credentials"}, status=status.HTTP_400_BAD_REQUEST
+    )
 
-    if not serializer.is_valid():
-        return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
-
-    user = authenticate(**serializer.data)
-    if user is None:
-        return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    access_token = create_access_token(user.id)
-
-    serializer = UserSerializer(user)
-
-    response = Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    response.set_cookie('access_token', access_token, httponly=True)
-
-    return response
-
-
-@swagger_auto_schema(method='post', request_body=UserRegisterSerializer)
+@swagger_auto_schema(
+    method="post",
+    request_body=UserSerializer,
+    responses={
+        status.HTTP_201_CREATED: "Created",
+        status.HTTP_400_BAD_REQUEST: "Bad Request",
+    },
+)
 @api_view(["POST"])
+@permission_classes([AllowAny])
 def register(request):
     serializer = UserRegisterSerializer(data=request.data)
 
@@ -397,36 +780,51 @@ def register(request):
 
     user = serializer.save()
 
-    access_token = create_access_token(user.id)
+    session = create_session(user.id)
+    cache.set(session, settings.SESSION_LIFETIME)
 
     serializer = UserSerializer(user)
 
     response = Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    response.set_cookie('access_token', access_token, httponly=True)
+    response.set_cookie('session', session, httponly=True)
 
     return response
 
 
+@swagger_auto_schema(
+    method="post",
+    responses={
+        status.HTTP_204_NO_CONTENT: "No content",
+        status.HTTP_403_FORBIDDEN: "Forbidden",
+    },
+)
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuth])
 def logout(request):
-    access_token = get_access_token(request)
+    session_id = request.COOKIES["session_id"]
+    if session_storage.exists(session_id):
+        session_storage.delete(session_id)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    return Response(status=status.HTTP_403_FORBIDDEN)
 
-    if access_token not in cache:
-        cache.set(access_token, settings.JWT["ACCESS_TOKEN_LIFETIME"])
 
-    return Response(status=status.HTTP_200_OK)
-
-
-@swagger_auto_schema(method='PUT', request_body=UserSerializer)
+@swagger_auto_schema(
+    method="put",
+    request_body=UserSerializer,
+    responses={
+        status.HTTP_200_OK: UserSerializer(),
+        status.HTTP_400_BAD_REQUEST: "Bad Request",
+        status.HTTP_403_FORBIDDEN: "Forbidden",
+    },
+)
 @api_view(["PUT"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuth])
+@authentication_classes([AuthBySessionID])
 def update_user(request, user_id):
     if not User.objects.filter(pk=user_id).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-    user = identity_user(request)
+    user = request.user
 
     if user.pk != user_id:
         return Response(status=status.HTTP_404_NOT_FOUND)

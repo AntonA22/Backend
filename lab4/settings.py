@@ -118,6 +118,8 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+SESSION_LIFETIME = timedelta(days=1)
+
 JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "ALGORITHM": "HS256",
@@ -141,3 +143,7 @@ AWS_SECRET_ACCESS_KEY = 'minio123'
 AWS_S3_ENDPOINT_URL = "http://minio:9000"
 AWS_S3_URL_PROTOCOL = "http:"
 AWS_S3_USE_SSL = False
+
+
+REDIS_HOST = 'redis'
+REDIS_PORT = 6379

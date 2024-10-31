@@ -4,4 +4,4 @@ from django.apps import AppConfig
 class AppConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'app'
-    verbose_name = "Перелеты на космодром"
+    verbose_name = "Перелеты на космодромы"

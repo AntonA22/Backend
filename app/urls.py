@@ -20,7 +20,7 @@ urlpatterns = [
     path('api/flights/<int:flight_id>/delete/', delete_flight),  # DELETE
 
     # Набор методов для м-м
-    path('api/flights/<int:flight_id>/ships/<int:ship_id>/', get_ship_flight),  # GET
+    # path('api/flights/<int:flight_id>/ships/<int:ship_id>/', get_ship_flight),  # GET
     path('api/flights/<int:flight_id>/update_ship/<int:ship_id>/', update_ship_in_flight),  # PUT
     path('api/flights/<int:flight_id>/delete_ship/<int:ship_id>/', delete_ship_from_flight),  # DELETE
 

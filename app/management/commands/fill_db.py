@@ -1,20 +1,19 @@
 import random
-from datetime import datetime
 
 from django.core.management.base import BaseCommand
 from minio import Minio
 
 from ...models import *
-from .utils import random_date, random_timedelta
+from .utils import random_date, random_timedelta, format_date
 
 
 def add_users():
-    User.objects.create_user("user", "user@user.com", "1234")
-    User.objects.create_superuser("root", "root@root.com", "1234")
+    User.objects.create_user("user", "user@user.com", "1234", first_name="user", last_name="user")
+    User.objects.create_superuser("root", "root@root.com", "1234", first_name="root", last_name="root")
 
     for i in range(1, 10):
-        User.objects.create_user(f"user{i}", f"user{i}@user.com", "1234")
-        User.objects.create_superuser(f"root{i}", f"root{i}@root.com", "1234")
+        User.objects.create_user(f"user{i}", f"user{i}@user.com", "1234", first_name=f"user{i}", last_name=f"user{i}")
+        User.objects.create_superuser(f"root{i}", f"root{i}@root.com", "1234", first_name=f"user{i}", last_name=f"user{i}")
 
     print("Пользователи созданы")
 
@@ -23,42 +22,42 @@ def add_ships():
     Ship.objects.create(
         name="Starship SN3",
         description="Серийный номер Starship 3, или SN3, представлял собой прототип Starship, предназначенный для статических огневых испытаний и полетов на малой высоте. Он был разрушен во время испытаний 3 апреля 2020 года. В баке с жидким кислородом в кормовой части транспортного средства произошла непреднамеренная разгерметизация, в результате чего конструкция рухнула под весом полного метантенка, расположенного выше (который был в центре внимания испытаний).",
-        creation_date=datetime.strptime("29.03.2020", "%d.%m.%Y").date(),
+        creation_date=format_date("29.03.2020"),
         image="1.png"
     )
 
     Ship.objects.create(
         name="Starship SN5",
         description="У транспортного средства SN5 отсутствует носовой обтекатель, поэтому он немного похож на высокую «летающую водонапорную башню», как и предыдущий испытательный стенд, но он все равно поднимался и опускался со стартовой площадки SpaceX в Бока-Чика, штат Техас.",
-        creation_date=datetime.strptime("25.09.2020", "%d.%m.%Y").date(),
+        creation_date=format_date("25.09.2020"),
         image="2.png"
     )
 
     Ship.objects.create(
         name="Starship SN4",
         description="Серийный номер Starship 4, или SN4, был прототипом Starship, предназначенным для суборбитальных испытаний. Аппарат прошел все контрольные испытания и стал первым прототипом программы Starship, прошедшим статические испытания со времен Starhopper. SN4 был уничтожен 29 мая 2020 года после успешного статического огневого испытания из-за отказа экспериментальной системы 'быстрого отключения' наземного вспомогательного оборудования.",
-        creation_date=datetime.strptime("17.04.2020", "%d.%m.%Y").date(),
+        creation_date=format_date("17.04.2020"),
         image="3.png"
     )
 
     Ship.objects.create(
         name="Starship SN11",
         description="SN11 стал четвертым полностью собранным прототипом Starship, прошедшим летные испытания. Это был последний прототип из первых четырех, поскольку Илон Маск объявил о значительных изменениях для SN15 и отмене SN12-14.",
-        creation_date=datetime.strptime("05.02.2022", "%d.%m.%Y").date(),
+        creation_date=format_date("05.02.2022"),
         image="4.png"
     )
 
     Ship.objects.create(
         name="Starship SN15",
         description="Starship 15 (SN15) был первым прототипом Starship, который успешно завершил полет и благополучно приземлился. Полет состоялся между 17:24 и 17:30 5 мая 2021 года. После его успешной посадки на опорах на краю площадки появились предположения о возможности второго полета в связи с перемещением SN15 на площадку B.",
-        creation_date=datetime.strptime("05.04.2023", "%d.%m.%Y").date(),
+        creation_date=format_date("05.04.2023"),
         image="5.png"
     )
 
     Ship.objects.create(
         name="Starship SN20",
         description="Starship 20 - выведенный из эксплуатации iso прототип второй ступени starship, который в настоящее время находится в rocket garden. Первоначально Первоначально Планировавшийся как первый корабль, который совершит орбитальный полет вместе с B4, он был замечен 7 марта 2021 года и проходил сборку, пока в июле 2021 года не завершился этап укладки.",
-        creation_date=datetime.strptime("17.08.2024", "%d.%m.%Y").date(),
+        creation_date=format_date("17.08.2024"),
         image="6.png"
     )
 
@@ -75,8 +74,8 @@ def add_ships():
 
 
 def add_flights():
-    users = User.objects.filter(is_superuser=False)
-    moderators = User.objects.filter(is_superuser=True)
+    users = User.objects.filter(is_staff=False)
+    moderators = User.objects.filter(is_staff=True)
 
     if len(users) == 0 or len(moderators) == 0:
         print("Заявки не могут быть добавлены. Сначала добавьте пользователей с помощью команды add_users")
@@ -86,14 +85,16 @@ def add_flights():
 
     for _ in range(30):
         status = random.randint(2, 5)
-        add_flight(status, ships, users, moderators)
+        owner = random.choice(users)
+        add_flight(status, ships, owner, moderators)
 
-    add_flight(1, ships, users, moderators)
+    add_flight(1, ships, users[0], moderators)
+    add_flight(2, ships, users[0], moderators)
 
     print("Заявки добавлены")
 
 
-def add_flight(status, ships, users, moderators):
+def add_flight(status, ships, owner, moderators):
     flight = Flight.objects.create()
     flight.status = status
 
@@ -105,7 +106,7 @@ def add_flight(status, ships, users, moderators):
         flight.date_formation = random_date()
         flight.date_created = flight.date_formation - random_timedelta()
 
-    flight.owner = random.choice(users)
+    flight.owner = owner
     flight.moderator = random.choice(moderators)
 
     flight.launch_cosmodrom = "Уоллопс (США)"
@@ -116,7 +117,7 @@ def add_flight(status, ships, users, moderators):
         item = ShipFlight(
             flight=flight,
             ship=ship,
-            value=random.randint(100, 1000)
+            value=random.randint(1, 10)
         )
         item.save()
 

@@ -2,6 +2,17 @@ from rest_framework import serializers
 
 from .models import *
 
+class CreateUpdateShipSerializer(serializers.ModelSerializer):
+    active_add = serializers.SerializerMethodField()
+
+    def get_active_add(self, ship):
+        has_flight = ShipFlight.objects.filter(ship=ship, flight_status=1).exists()
+        return not has_flight
+
+    class Meta:
+        model = Ship
+        exclude = ['image']
+
 
 class ShipSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
@@ -76,7 +87,7 @@ class ShipFlightSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email')
+        fields = ('id', 'email', 'username')
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
