@@ -17,8 +17,11 @@ class CreateUpdateShipSerializer(serializers.ModelSerializer):
 class ShipSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
 
+    
     def get_image(self, ship):
-        return ship.image.url.replace("minio", "localhost", 1)
+        image_url = f"http://localhost:9000/images/{ship.image}"
+        print(f"Generated image URL: {image_url}")  # Выводим URL в консоль
+        return image_url
         
     class Meta:
         model = Ship
@@ -27,17 +30,17 @@ class ShipSerializer(serializers.ModelSerializer):
 
 class ShipItemSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
-    value = serializers.SerializerMethodField('get_value')
+    payload = serializers.SerializerMethodField('get_value')
 
     def get_image(self, ship):
-        return ship.image.url.replace("minio", "localhost", 1)
+        return ship.image.url.replace("minio", "minio", 1)
 
     def get_value(self, ship):
-        return self.context.get("value")
+        return self.context.get("payload")
 
     class Meta:
         model = Ship
-        fields = ("id", "name", "image", "value")
+        fields = ("id", "name", "image", "payload")
 
 
 class FlightsSerializer(serializers.ModelSerializer):
@@ -71,7 +74,7 @@ class FlightSerializer(serializers.ModelSerializer):
     
     def get_ships(self, flight):
         items = ShipFlight.objects.filter(flight=flight)
-        return [ShipItemSerializer(item.ship, context={"value": item.value}).data for item in items]
+        return [ShipItemSerializer(item.ship, context={"payload": item.payload}).data for item in items]
     
     class Meta:
         model = Flight

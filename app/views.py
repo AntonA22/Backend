@@ -7,7 +7,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from .redis import session_storage
 from rest_framework.permissions import AllowAny
+from django.db.models.functions import Lower
 import uuid
+from .minio import *
+import random
 from rest_framework.parsers import FormParser
 
 from rest_framework.decorators import (
@@ -41,7 +44,6 @@ def get_draft_flight(request):
 )
 @api_view(["GET"])
 @permission_classes([AllowAny])
-@authentication_classes([AuthBySessionIDIfExists])
 def search_ships(request):
     ship_name = request.GET.get("ship_name", "")
 
@@ -49,6 +51,8 @@ def search_ships(request):
 
     if ship_name:
         ships = ships.filter(name__icontains=ship_name)
+    
+    ships = ships.order_by('id')
 
     serializer = ShipSerializer(ships, many=True)
 
@@ -526,6 +530,7 @@ def update_status_admin(request, flight_id):
     flight.status = request_status
     flight.date_complete = timezone.now()
     flight.moderator = request.user
+    flight.result = random.choice([True, False])
     flight.save()
 
     serializer = FlightSerializer(flight)
@@ -780,13 +785,9 @@ def register(request):
 
     user = serializer.save()
 
-    session = create_session(user.id)
-    cache.set(session, settings.SESSION_LIFETIME)
-
     serializer = UserSerializer(user)
 
     response = Response(serializer.data, status=status.HTTP_201_CREATED)
-    response.set_cookie('session', session, httponly=True)
 
     return response
 

@@ -12,7 +12,7 @@ class Ship(models.Model):
 
     name = models.CharField(max_length=100, verbose_name="Название")
     status = models.IntegerField(choices=STATUS_CHOICES, default=1, verbose_name="Статус")
-    image = models.ImageField(default="images/default.png")
+    image = models.ImageField(default="default.png")
     description = models.TextField(verbose_name="Описание", blank=True)
 
     creation_date = models.DateField(blank=True)
@@ -46,13 +46,14 @@ class Flight(models.Model):
     launch_cosmodrom = models.CharField(blank=True, null=True)
     arrival_cosmodrom = models.CharField(blank=True, null=True)
     estimated_launch_date = models.DateTimeField(blank=True, null=True)
+    result = models.BooleanField(blank=True, null=True)
 
     def __str__(self):
         return "Перелет №" + str(self.pk)
     
     def get_ships(self):
         return [
-            setattr(item.ship, "value", item.value) or item.ship
+            setattr(item.ship, "payload", item.payload) or item.ship
             for item in ShipFlight.objects.filter(flight=self)
         ]
 
@@ -66,7 +67,7 @@ class Flight(models.Model):
 class ShipFlight(models.Model):
     ship = models.ForeignKey(Ship, models.DO_NOTHING, blank=True, null=True)
     flight = models.ForeignKey(Flight, models.DO_NOTHING, blank=True, null=True)
-    value = models.IntegerField(verbose_name="Поле м-м", blank=True, null=True)
+    payload = models.IntegerField(verbose_name="Поле м-м", blank=True, null=True)
 
     def __str__(self):
         return "м-м №" + str(self.pk)
